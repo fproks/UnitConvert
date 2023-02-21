@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import com.example.unitconvert.compose.ComposeUnitConverter
 import com.example.unitconvert.compose.DistanceConverter
 import com.example.unitconvert.compose.TemperatureConverter
 import com.example.unitconvert.ui.theme.UnitConvertTheme
@@ -15,14 +16,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            UnitConvertTheme {
+          /*  UnitConvertTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background) {
                     //Greeting("Android")
                     //TemperatureConverter()
-                    DistanceConverter()
+                   // DistanceConverter()
                 }
-            }
+            }*/
+            ComposeUnitConverter()
         }
     }
 }
