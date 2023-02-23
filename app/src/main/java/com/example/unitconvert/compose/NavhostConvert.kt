@@ -1,6 +1,5 @@
 package com.example.unitconvert.compose
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
@@ -27,7 +26,7 @@ fun ComposeUnitConverter() {
     val navController = rememberNavController()
     val mentItens = listOf("Item #1", "Item #2")
     val scaffoldState = rememberScaffoldState()
-    val sncakbarCoroutineScope = rememberCoroutineScope()
+    val sncakbarCoroutineScope = rememberCoroutineScope()  //协程
 
     UnitConvertTheme {
         Scaffold(scaffoldState = scaffoldState,
@@ -54,7 +53,7 @@ fun ComposeUnitConverter() {
 @Preview
 @Composable
 fun TopBarPreview() {
-    ComposeUnitConverterTopBar(listOf("item1 #1", "item2 #2")) { {} }
+    ComposeUnitConverterTopBar(listOf("item1 #1", "item2 #2")) {  }
 }
 
 @Composable
@@ -66,7 +65,7 @@ fun ComposeUnitConverterTopBar(mentunItems: List<String>, onClick: (String) -> U
                 IconButton(onClick = {
                     menuOpened = true
                 }) {
-                    // Icon(Icons.Default.MoreVert, "")
+                    Icon(Icons.Default.MoreVert, "")
                 }
                 DropdownMenu(expanded = menuOpened,
                     onDismissRequest = { menuOpened = false }) {

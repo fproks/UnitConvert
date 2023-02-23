@@ -12,6 +12,7 @@ import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,39 +23,35 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.unitconvert.R
+import com.example.unitconvert.models.TemperatureViewModel
+import kotlinx.coroutines.launch
 
 @Preview
 @Composable
-fun TemperatureConverter() {
+fun TemperatureConverter(
+    viewModel: TemperatureViewModel = viewModel()
+) {
     val fahrenheit = stringResource(id = R.string.fahrenheit)
     val celsius = stringResource(id = R.string.celsius)
     var result by rememberSaveable { mutableStateOf("") }
-    val selectedId = rememberSaveable { mutableStateOf(0) }
-    val temperature = rememberSaveable { mutableStateOf("") }
+    val temperature = viewModel.temperature.observeAsState(viewModel.temperature.value ?: "")
+    val selectedId = viewModel.scale.observeAsState(viewModel.scale.value ?: 0)
+    val scope = rememberCoroutineScope()  //协程
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        TemperatureTextField(temperature)
-        TemperatureScaleButtonGroup(selectedId)
+        TemperatureTextField(temperature) { viewModel.setTemperature(it) }
+        TemperatureScaleButtonGroup(selectedId) { viewModel.setScale(it) }
         Button(onClick = {
-            val tmp = temperature.value.let {
-                try {
-                    it.toFloat()
-                } catch (e: NumberFormatException) {
-                    Float.NaN
-                }
-            }.let {
-                if (!it.isNaN()) {
-                    if (selectedId.value == R.string.celsius) (it * 1.8F) + 32F
-                    else (it - 32F) / 1.8F
-                } else Float.NaN
+            scope.launch {//协程
+                val tmp = viewModel.convert()
+                result = if (!tmp.isNaN()) "$tmp${
+                    if (selectedId.value == R.string.celsius) fahrenheit
+                    else celsius
+                }" else ""
             }
-            result = if (!tmp.isNaN()) "$tmp${
-                if (selectedId.value == R.string.celsius) fahrenheit
-                else celsius
-            }" else ""
-
         }, enabled = true) {
             Text(text = stringResource(id = R.string.convert))
         }
@@ -67,14 +64,14 @@ fun TemperatureConverter() {
 
 
 //少一个隐藏键盘
-
+//获取数据，向上传递事件
 @Composable
-fun TemperatureTextField(temperature: MutableState<String>) {
+fun TemperatureTextField(temperature: State<String>, onValueChange: (String) -> Unit) {
     val localFocus = LocalFocusManager.current
     val context = LocalContext.current
     TextField(
         value = temperature.value,
-        onValueChange = { temperature.value = it },
+        onValueChange = { onValueChange(it) },
         placeholder = { Text(text = stringResource(id = R.string.placeholder)) },
         keyboardActions = KeyboardActions(onDone = {
             localFocus.clearFocus()
@@ -88,21 +85,22 @@ fun TemperatureTextField(temperature: MutableState<String>) {
 }
 
 
+//获取数据，向上传递事件
+
 @Composable
-fun TemperatureScaleButtonGroup(selectedId: MutableState<Int>) {
+fun TemperatureScaleButtonGroup(selectedId: State<Int>, onClick: (Int) -> Unit) {
 
     Row {
-        TemperatureRadioButton(selected = selectedId.value == R.string.celsius, selectedId, R.string.celsius)
-        TemperatureRadioButton(selected = selectedId.value == R.string.fahrenheit, selectedId, R.string.fahrenheit)
+        TemperatureRadioButton(selected = selectedId.value == R.string.celsius, R.string.celsius, onClick)
+        TemperatureRadioButton(selected = selectedId.value == R.string.fahrenheit, R.string.fahrenheit, onClick)
     }
 }
 
 @Composable
-fun TemperatureRadioButton(selected: Boolean, selectedId: MutableState<Int>, resId: Int) {
+fun TemperatureRadioButton(selected: Boolean, resId: Int, onClick: (Int) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        RadioButton(selected = selected, onClick = {
-            selectedId.value = resId
-        })
+        RadioButton(selected = selected, onClick =
+        { onClick(resId) })
         Text(text = stringResource(resId), modifier = Modifier.padding(start = 8.dp))
     }
 }
