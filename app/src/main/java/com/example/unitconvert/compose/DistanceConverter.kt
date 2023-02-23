@@ -8,6 +8,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,7 +18,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.unitconvert.R
+import com.example.unitconvert.models.DistanceViewModel
+import kotlinx.coroutines.launch
 
 
 @Preview
@@ -25,36 +29,27 @@ import com.example.unitconvert.R
 fun DistanceConverter() {
     val meter = stringResource(id = R.string.meter)
     val mile = stringResource(id = R.string.mile)
+    val viewModel: DistanceViewModel = viewModel()
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        val distance = rememberSaveable { mutableStateOf("") }
+        //val distance = rememberSaveable { mutableStateOf("") }
+        val distance = viewModel.distance.observeAsState(viewModel.distance.value ?: "")
+        val selectedId = viewModel.selectedId.observeAsState(viewModel.selectedId.value ?: 0)
         var result by rememberSaveable { mutableStateOf("") }
-        val selectedId = rememberSaveable { mutableStateOf(0) }
-        DistanceTextField(distance)
-        DistanceScaleButtonGroup(selectedId)
+        val scope = rememberCoroutineScope()
+        // val selectedId = rememberSaveable { mutableStateOf(0) }
+        DistanceTextField(distance) { viewModel.setDistance(it) }
+        DistanceScaleButtonGroup(selectedId) { viewModel.setSelectedId(it) }
         Button(onClick = {
-            val dis = distance.value.let {
-                try {
-                    it.toFloat()
-                } catch (e: NumberFormatException) {
-                    Float.NaN
-                }
-            }.let {
-                if (!it.isNaN()) {
-                    when (selectedId.value) {
-                        R.string.meter -> it * 0.00062137F
-                        R.string.mile -> it / 0.00062137F
-                        else -> Float.NaN
-                    }
-                } else Float.NaN
+            scope.launch {
+                val dis = viewModel.convert()
+                result = if (!dis.isNaN()) "$dis${
+                    if (selectedId.value == R.string.meter) meter
+                    else mile
+                }" else ""
             }
-            result = if (!dis.isNaN()) "$dis${
-                if (selectedId.value == R.string.meter) meter
-                else mile
-            }" else ""
-
         }, enabled = true) {
             Text(text = stringResource(id = R.string.convert))
         }
@@ -70,13 +65,13 @@ fun DistanceConverter() {
 }
 
 @Composable
-fun DistanceTextField(distance: MutableState<String>) {
+fun DistanceTextField(distance: State<String>, onValueChange: (String) -> Unit) {
 
     val localFocusManager = LocalFocusManager.current
     TextField(
         value = distance.value,
         onValueChange = {
-            distance.value = it
+            onValueChange(it)
         },
         placeholder = { Text(text = stringResource(id = R.string.placeholder_distance)) },
         keyboardActions = KeyboardActions(onDone = { localFocusManager.clearFocus() }),
@@ -87,25 +82,25 @@ fun DistanceTextField(distance: MutableState<String>) {
 
 
 @Composable
-fun DistanceScaleButtonGroup(sel: MutableState<Int>) {
+fun DistanceScaleButtonGroup(sel: State<Int>, onSelected: (Int) -> Unit) {
     Row {
         DistanceRadioButton(
             selected = sel.value == R.string.meter,
-            selectedId = sel,
-            resId = R.string.meter
+            resId = R.string.meter,
+            onSelected
         )
         DistanceRadioButton(
             selected = sel.value == R.string.mile,
-            selectedId = sel,
-            resId = R.string.mile
+            resId = R.string.mile,
+            onSelected
         )
     }
 }
 
 @Composable
-fun DistanceRadioButton(selected: Boolean, selectedId: MutableState<Int>, resId: Int) {
+fun DistanceRadioButton(selected: Boolean, resId: Int, onSelected: (Int) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        RadioButton(selected = selected, onClick = { selectedId.value = resId })
+        RadioButton(selected = selected, onClick = { onSelected(resId) })
         Text(text = stringResource(id = resId), modifier = Modifier.padding(start = 8.dp))
     }
 }
