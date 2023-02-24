@@ -7,10 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.Button
-import androidx.compose.material.RadioButton
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -59,7 +56,7 @@ fun TemperatureConverter(
             Text(text = stringResource(id = R.string.convert))
         }
         if (result.isNotEmpty()) {
-            Text(text = result)
+            Text(text = result,style = MaterialTheme.typography.h3)
         }
 
     }

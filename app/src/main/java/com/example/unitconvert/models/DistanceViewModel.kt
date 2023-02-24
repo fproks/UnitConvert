@@ -4,27 +4,38 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.unitconvert.R
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class DistanceViewModel : ViewModel() {
+@HiltViewModel
+class DistanceViewModel @Inject constructor(private val state: DistanceState) : ViewModel() {
 
-    private val _distance = MutableLiveData<String>("")
+    //private val _distance = MutableLiveData<String>("")
     val distance: LiveData<String>
-        get() = _distance
+        get() = state.distance
 
     fun setDistance(distance: String) {
-        _distance.value = distance
+        state.distance.value = distance
     }
 
-    private val _selectedId = MutableLiveData<Int>(0)
+    //private val _selectedId = MutableLiveData<Int>(0)
 
     val selectedId: LiveData<Int>
-        get() = _selectedId
+        get() = state.selectedId
 
     fun setSelectedId(selectedId: Int) {
-        _selectedId.value = selectedId
+        state.selectedId.value = selectedId
     }
 
-    fun getDistanceAsFloat(): Float = (_distance.value ?: "").let {
+    val result: LiveData<String>
+        get() = state.result
+
+    fun updateResult(result: String) {
+        state.result.value = result
+    }
+
+    fun getDistanceAsFloat(): Float = (distance.value ?: "").let {
         try {
             it.toFloat()
         } catch (e: NumberFormatException) {
@@ -34,11 +45,18 @@ class DistanceViewModel : ViewModel() {
 
     fun convert(): Float = getDistanceAsFloat().let {
         if (!it.isNaN())
-            when (_selectedId.value) {
+            when (selectedId.value) {
                 R.string.meter -> it * 0.00062137F
                 R.string.mile -> it / 0.00062137F
                 else -> Float.NaN
             } else Float.NaN
     }
 
+}
+
+@Singleton
+class DistanceState @Inject constructor() {
+    val distance = MutableLiveData<String>("")
+    val selectedId = MutableLiveData<Int>(0)
+    val result = MutableLiveData<String>("")
 }
