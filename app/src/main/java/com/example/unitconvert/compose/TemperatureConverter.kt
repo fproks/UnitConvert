@@ -11,9 +11,11 @@ import androidx.compose.material.Button
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -23,7 +25,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.unitconvert.R
 import com.example.unitconvert.models.TemperatureViewModel
 import kotlinx.coroutines.launch
@@ -31,13 +33,13 @@ import kotlinx.coroutines.launch
 @Preview
 @Composable
 fun TemperatureConverter(
-    viewModel: TemperatureViewModel = viewModel()
+     viewModel: TemperatureViewModel = hiltViewModel()
 ) {
-    val fahrenheit = stringResource(id = R.string.fahrenheit)
+        val fahrenheit = stringResource(id = R.string.fahrenheit)
     val celsius = stringResource(id = R.string.celsius)
-    var result by rememberSaveable { mutableStateOf("") }
     val temperature = viewModel.temperature.observeAsState(viewModel.temperature.value ?: "")
     val selectedId = viewModel.scale.observeAsState(viewModel.scale.value ?: 0)
+    val result by viewModel.result.observeAsState(viewModel.result.value ?: "")
     val scope = rememberCoroutineScope()  //协程
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally
@@ -47,10 +49,11 @@ fun TemperatureConverter(
         Button(onClick = {
             scope.launch {//协程
                 val tmp = viewModel.convert()
-                result = if (!tmp.isNaN()) "$tmp${
+                val tmp_result = if (!tmp.isNaN()) "$tmp${
                     if (selectedId.value == R.string.celsius) fahrenheit
                     else celsius
                 }" else ""
+                viewModel.setResult(tmp_result)
             }
         }, enabled = true) {
             Text(text = stringResource(id = R.string.convert))

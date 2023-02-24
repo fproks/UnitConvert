@@ -4,31 +4,46 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.unitconvert.R
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /*
-* 保存两个数据
+* viewModel 注入
+*
+*
 * */
-class TemperatureViewModel() : ViewModel() {
-    private val _scale: MutableLiveData<Int> = MutableLiveData(R.string.celsius)
+
+@HiltViewModel
+class TemperatureViewModel @Inject constructor(private val state: TemperatureState) : ViewModel() {
+    //private val _scale: MutableLiveData<Int> = MutableLiveData(R.string.celsius)
 
     val scale: LiveData<Int>
-        get() = _scale
+        get() = state.scale
 
     fun setScale(value: Int) {
-        _scale.value = value
+        state.scale.value = value
     }
 
-    private val _temperature: MutableLiveData<String> = MutableLiveData("")
+    //private val _temperature: MutableLiveData<String> = MutableLiveData("")
 
     val temperature: LiveData<String>
-        get() = _temperature
+        get() = state.temperature
 
     fun setTemperature(value: String) {
-        _temperature.value = value
+        state.temperature.value = value
     }
 
 
-    private fun getTemperatureAsFloat(): Float = (_temperature.value ?: "").let {
+    val result: LiveData<String>
+        get() = state.result
+
+    fun setResult(value: String) {
+        state.result.value = value
+    }
+
+
+    private fun getTemperatureAsFloat(): Float = (temperature.value ?: "").let {
         return try {
             it.toFloat()
         } catch (e: NumberFormatException) {
@@ -38,11 +53,18 @@ class TemperatureViewModel() : ViewModel() {
 
     fun convert() = getTemperatureAsFloat().let {
         if (!it.isNaN())
-            if (_scale.value == R.string.celsius)
+            if (scale.value == R.string.celsius)
                 (it * 1.8F) + 32F
             else
                 (it - 32F) / 1.8F
         else
             Float.NaN
     }
+}
+
+@Singleton
+class TemperatureState @Inject constructor() {
+    val scale: MutableLiveData<Int> = MutableLiveData(R.string.celsius)
+    val temperature: MutableLiveData<String> = MutableLiveData("")
+    val result: MutableLiveData<String> = MutableLiveData("")
 }
